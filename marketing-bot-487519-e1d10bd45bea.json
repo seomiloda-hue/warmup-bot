@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "marketing-bot-487519",
+  "private_key_id": "e1d10bd45bea53614eb87ddb02e2097145145df2",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDT/vTP+tRTirvm\n9ts+2FcsfV9uTpSW81Phv9MCYW0RdHhew2xSPF4odj+1i0cBn9s/Dd3tJkKDH5DO\njQ5Y7tr6V9+b3X0iV0l1K5TQgcHwoD1A/x3fkFAsAH3QndKfU0nDR2k6zP8qc/QC\nB2OgtLhVPkpTgE4UKzsNymeuf00I1jjyPoZAggZJI7xJX5yASBGF2ps6G09u+cmj\nCoNMi4psuogM0O7g32BdBFudG/Cf2o7IdhyLhlnOiuxsjjsKrOgGoixixgHAElSl\nbzFPvRdL7pqY4g4FpB7+FSwdm31bk/jSM5ra83/IyZKYoldw3gVVLwli4tbX+vpu\nH+XtOMPnAgMBAAECggEATovWdQDAjruGZ0rrbNuHYQqKwzoGP++kEq6aJfWnDaKT\nvri1d7q6QE+fx0n1YxqxhylCIs3cMu0NIBqPSFAnfj30sbFc3c5tfyZImwCYtOkK\nCPz9OoojykncU+FF2pZnbB0XVhwCJt6Td/T46uBKs/rCWzHcvAhQdwmZZMPx7OWV\ntyhM3NSmnnlK0UUac41Z3Bb8abLaKrZI/cbSuDW1LZqIn2NpFr6kohbTMQuMrP0J\nZuINDdvwTNzvh50dCo3efZzqACuKBv/r629WqRlD1/6wyMnLpSf+Jciw8RDbLi68\nXeCo4yNsrpJ6Xj7ygoJ8Adn9xCXhGbZhTDczsH14sQKBgQDwotm2D50SaCyNImMV\nfouMygNrauy/Gr/xTXyr3nPXw9PGtm8+xTV83Cq04W9p1RUf5/voptwY4DfXpkUL\n5ZIityDQI02z8BU4w0CMyGRAdvGDnira2fhHr48aNUl6LsZIix8KqMWdCVL7pOB6\nWNCJrPdSgLTHRA9rKxITdMAxPQKBgQDhh/zBdhozFNusy5o1UHjXCWJo1qzN93yg\nTyVg2t5aAI6i3p17SXxEHBaDCV3RJ72VzTtjsfcA4rblaRoX2VA7lcTLzN/qmWCq\nUsl5G9/nSVqzlmJjnX65qar2Sbd+pCYS0z8Vtkbv8o/85LA1AWVyVW+ILXAmplVV\n1vFmWNST8wKBgEua7wpbx38UCgNh7X3AX7ohcoeadb3peqsnLGeXohAFsBE8GqG/\nNnn/ds+UEPxQfa2jpqtHWdnbANCZphIB1DNiFEYxAWXqpdBK0IorIAx9Eo7G8DII\n0BA94ZlbarWf4p7CT0N7GXOojVERUZI/O242URKz65i8EpgaVTiVsxkFAoGBAKWP\nXH7wof8JutG4jTXCI1NIclOf9C8nFPfh4gCd60iKzCrH3TeaFH0zWVtMTvCxib0k\ncgqXpEmkJLt4Uk1bnEiBg3xQo7fmbE3chEZBrjZtZQYcyZFzFopZAUXXi7qN6d07\n8j2QF7chi44Mm0XuBnjOOxfuszvMMyzWo1OMtlD9AoGBAJf64jNgoNVXQs+r9JuJ\n+leGxWhWypkjyEqnCKojpDHy+nwmnlgu1rfr90Vbs216ICTu2yFRBhZ9aGm0aGyS\n86kXIc4QVc2DdXuGuTEhrKGNgmUyFCGDFkcguRC1s6cXEtm2hK+1sTjdps4OVzcB\ni1eQfN4j/xJrFbxcN6BSfNhn\n-----END PRIVATE KEY-----\n",
+  "client_email": "marketing-bot@marketing-bot-487519.iam.gserviceaccount.com",
+  "client_id": "102108194803682396914",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/marketing-bot%40marketing-bot-487519.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
