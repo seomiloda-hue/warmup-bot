@@ -11,6 +11,7 @@ import os
 import csv
 import requests
 import threading
+import socket
 from flask import Flask
 
 # ================== الإعدادات الأساسية ==================
@@ -20,7 +21,10 @@ SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 # ✅ قراءة مسار ملف JSON من متغير البيئة
 JSON_FILE = os.environ.get("JSON_FILE", "gcp-key.json")
 
-WARMUP_SHEET = "Warmup Accounts"
+# ✅ استخدام معرف الشيت بدلاً من الاسم (أكثر استقراراً)
+SHEET_ID = "1EsT8ErcWjOqhbD12LIQszdZ-3GrsvHf6N2vN9WEuwsc"  # تم أخذ المعرف من الرابط الذي أرسلته
+
+WARMUP_SHEET = "Warmup Accounts"  # للاستخدام في الرسائل فقط
 MESSAGES_FILE = "messages.json"
 STATE_FILE = "warmup_state.json"
 LOG_FILE = "warmup_log.csv"
@@ -106,7 +110,7 @@ SUBJECTS = [
     "تحقق من الوصول"
 ]
 
-# ================== ربط Google Sheets ==================
+# ================== ربط Google Sheets باستخدام المعرف ==================
 
 def connect_to_warmup_sheet():
     try:
@@ -115,18 +119,28 @@ def connect_to_warmup_sheet():
         print("✅ تم تحميل ملف JSON بنجاح")
         print("🔍 محاولة التفويض لـ Google Sheets...")
         client = gspread.authorize(creds)
-        print("✅ تم إنشاء client بنجاح")  # <-- سطر تتبع جديد
+        print("✅ تم إنشاء client بنجاح")
         print("✅ تم التفويض لـ Google Sheets")
-        print(f"🔍 محاولة فتح الشيت: {WARMUP_SHEET}...")
-        sheet = client.open(WARMUP_SHEET).sheet1
-        print(f"✅ تم فتح شيت: {WARMUP_SHEET}")
+        print(f"🔍 محاولة فتح الشيت باستخدام المعرف: {SHEET_ID}...")
+        
+        # ✅ إضافة مهلة زمنية 30 ثانية لمنع التعليق
+        socket.setdefaulttimeout(30)
+        print("⏰ تم تعيين مهلة زمنية 30 ثانية لعملية فتح الشيت")
+        
+        # ✅ فتح الشيت باستخدام المعرف (الأكثر استقراراً)
+        sheet = client.open_by_key(SHEET_ID).sheet1
+        print(f"✅ تم فتح الشيت بنجاح (الاسم: {WARMUP_SHEET})")
         return sheet
     except FileNotFoundError:
         print(f"❌ ملف JSON غير موجود: {JSON_FILE}")
         return None
     except gspread.exceptions.SpreadsheetNotFound:
-        print(f"❌ لم يتم العثور على شيت باسم: {WARMUP_SHEET}")
-        print("   تأكد من اسم الشيت ومشاركته مع حساب الخدمة.")
+        print(f"❌ لم يتم العثور على شيت بالمعرف: {SHEET_ID}")
+        print("   تأكد من صحة معرف الشيت ومشاركته مع حساب الخدمة.")
+        return None
+    except socket.timeout:
+        print("❌ انتهت المهلة الزمنية أثناء محاولة فتح الشيت (30 ثانية).")
+        print("   قد تكون هناك مشكلة في الاتصال بـ Google Sheets.")
         return None
     except Exception as e:
         print(f"❌ خطأ غير متوقع: {type(e).__name__}: {e}")
@@ -446,4 +460,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
