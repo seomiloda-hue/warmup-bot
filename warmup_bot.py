@@ -30,6 +30,10 @@ ZOHO_PASSWORD = os.environ.get("ZOHO_PASSWORD", "")
 SMTP_SERVER = "smtp.zoho.com"
 SMTP_PORT = 587
 
+# قراءة ساعات العمل من المتغيرات البيئية
+WORK_START_HOUR = int(os.environ.get("WORK_START_HOUR", 9))
+WORK_END_HOUR = int(os.environ.get("WORK_END_HOUR", 16))
+
 DAILY_LIMITS = {
     1: 10, 2: 10, 3: 10, 4: 10, 5: 10,
     6: 15, 7: 15, 8: 15, 9: 15, 10: 15,
@@ -39,8 +43,6 @@ DAILY_LIMITS = {
 }
 
 WARMUP_DAYS = 25
-WORK_START_HOUR = 9
-WORK_END_HOUR = 16
 
 MIN_PERIODS = 3
 MAX_PERIODS = 6
@@ -108,11 +110,17 @@ SUBJECTS = [
 
 def connect_to_warmup_sheet():
     try:
+        print(f"🔍 محاولة فتح ملف JSON: {JSON_FILE}")
         creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_FILE, SCOPE)
+        print("✅ تم تحميل ملف JSON بنجاح")
         client = gspread.authorize(creds)
+        print("✅ تم التفويض لـ Google Sheets")
         sheet = client.open(WARMUP_SHEET).sheet1
         print(f"✅ تم فتح شيت: {WARMUP_SHEET}")
         return sheet
+    except FileNotFoundError:
+        print(f"❌ ملف JSON غير موجود: {JSON_FILE}")
+        return None
     except Exception as e:
         print(f"❌ خطأ في فتح الشيت: {e}")
         return None
@@ -404,11 +412,15 @@ def main():
     print("🚀 بوت التسخين - DualWin Agency")
     print("=" * 50)
     
+    print("🔍 الخطوة 1: محاولة الاتصال بـ Google Sheets...")
     sheet = connect_to_warmup_sheet()
     if not sheet:
+        print("❌ فشل الاتصال بـ Google Sheets. تحقق من ملف JSON والصلاحيات.")
         return
     
+    print("✅ الخطوة 2: تم الاتصال بـ Google Sheets بنجاح.")
     print("✅ البوت جاهز")
+    
     try:
         while True:
             run_warmup_day(sheet)
