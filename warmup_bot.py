@@ -18,13 +18,10 @@ from flask import Flask
 
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# ✅ قراءة مسار ملف JSON من متغير البيئة
-JSON_FILE = os.environ.get("JSON_FILE", "gcp-key.json")
+# ✅ قراءة مسار ملف JSON من متغير البيئة مباشرة
+JSON_FILE = os.environ["JSON_FILE"]  # تم التعديل هنا
 
-# ✅ استخدام معرف الشيت بدلاً من الاسم (أكثر استقراراً)
-SHEET_ID = "1EsT8ErcWjOqhbD12LIQszdZ-3GrsvHf6N2vN9WEuwsc"  # تم أخذ المعرف من الرابط الذي أرسلته
-
-WARMUP_SHEET = "Warmup Accounts"  # للاستخدام في الرسائل فقط
+WARMUP_SHEET = "Warmup Accounts"
 MESSAGES_FILE = "messages.json"
 STATE_FILE = "warmup_state.json"
 LOG_FILE = "warmup_log.csv"
@@ -57,20 +54,21 @@ MAX_DELAY_WITHIN_PERIOD = 7 * 60
 
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "DualWin_Agency")
 
-# ================== خادم Flask لإبقاء البوت نشطاً على Render ==================
+# ================== خادم Flask لإبقاء البوت نشطاً على Railway ==================
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "✅ بوت التسخين شغال على Render"
+    return "✅ بوت التسخين شغال على Railway"
 
 @app.route('/health')
 def health():
     return "OK", 200
 
 def run_flask():
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
 
 # تشغيل Flask في خلفية منفصلة
 threading.Thread(target=run_flask, daemon=True).start()
@@ -110,7 +108,7 @@ SUBJECTS = [
     "تحقق من الوصول"
 ]
 
-# ================== ربط Google Sheets باستخدام المعرف ==================
+# ================== ربط Google Sheets ==================
 
 def connect_to_warmup_sheet():
     try:
@@ -121,22 +119,22 @@ def connect_to_warmup_sheet():
         client = gspread.authorize(creds)
         print("✅ تم إنشاء client بنجاح")
         print("✅ تم التفويض لـ Google Sheets")
-        print(f"🔍 محاولة فتح الشيت باستخدام المعرف: {SHEET_ID}...")
+        print("🔍 محاولة فتح الشيت...")
         
         # ✅ إضافة مهلة زمنية 30 ثانية لمنع التعليق
         socket.setdefaulttimeout(30)
         print("⏰ تم تعيين مهلة زمنية 30 ثانية لعملية فتح الشيت")
         
-        # ✅ فتح الشيت باستخدام المعرف (الأكثر استقراراً)
-        sheet = client.open_by_key(SHEET_ID).sheet1
-        print(f"✅ تم فتح الشيت بنجاح (الاسم: {WARMUP_SHEET})")
+        # ✅ فتح الشيت باستخدام الاسم
+        sheet = client.open(WARMUP_SHEET).sheet1
+        print(f"✅ تم فتح شيت: {WARMUP_SHEET}")
         return sheet
     except FileNotFoundError:
         print(f"❌ ملف JSON غير موجود: {JSON_FILE}")
         return None
     except gspread.exceptions.SpreadsheetNotFound:
-        print(f"❌ لم يتم العثور على شيت بالمعرف: {SHEET_ID}")
-        print("   تأكد من صحة معرف الشيت ومشاركته مع حساب الخدمة.")
+        print(f"❌ لم يتم العثور على شيت باسم: {WARMUP_SHEET}")
+        print("   تأكد من اسم الشيت ومشاركته مع حساب الخدمة.")
         return None
     except socket.timeout:
         print("❌ انتهت المهلة الزمنية أثناء محاولة فتح الشيت (30 ثانية).")
