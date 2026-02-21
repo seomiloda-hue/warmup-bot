@@ -115,6 +115,7 @@ def connect_to_warmup_sheet():
         print("✅ تم تحميل ملف JSON بنجاح")
         print("🔍 محاولة التفويض لـ Google Sheets...")
         client = gspread.authorize(creds)
+        print("✅ تم إنشاء client بنجاح")  # <-- سطر تتبع جديد
         print("✅ تم التفويض لـ Google Sheets")
         print(f"🔍 محاولة فتح الشيت: {WARMUP_SHEET}...")
         sheet = client.open(WARMUP_SHEET).sheet1
