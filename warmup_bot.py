@@ -319,8 +319,10 @@ def generate_activity_periods(total_messages, distribution):
 # ================== تشغيل يوم ==================
 
 def run_warmup_day(sheet):
+    print("🔥 الدالة run_warmup_day بدأت التنفيذ...")
     state = load_state()
     if not state:
+        print("📝 لا توجد حالة سابقة، سيتم إنشاء حالة جديدة.")
         state = init_state()
     
     if state["completed"]:
@@ -329,6 +331,7 @@ def run_warmup_day(sheet):
     
     day = state["current_day"]
     if day > WARMUP_DAYS:
+        print("🏁 اليوم أكبر من 25، سيتم إنهاء المرحلة.")
         state["completed"] = True
         save_state(state)
         send_completion_notification(state["total_sent"])
@@ -346,6 +349,7 @@ def run_warmup_day(sheet):
     print("📊 التوزيع:", dist)
     
     starts, counts, schedule = generate_activity_periods(target, dist)
+    print(f"⏰ تم إنشاء {len(starts)} فترات نشاط.")
     
     now = datetime.now()
     today_start = datetime(now.year, now.month, now.day, WORK_START_HOUR, 0)
@@ -360,7 +364,7 @@ def run_warmup_day(sheet):
                 print(f"⏳ انتظار {p_time.strftime('%H:%M')}")
                 time.sleep(wait)
         
-        print(f"\n📨 الفترة {p_idx+1} ({p_time.strftime('%H:%M')})")
+        print(f"\n📨 الفترة {p_idx+1} ({p_time.strftime('%H:%M')}) - عدد الرسائل: {p_msgs}")
         
         p_emails = []
         for acc, sch in schedule.items():
@@ -372,12 +376,13 @@ def run_warmup_day(sheet):
         for i, to in enumerate(p_emails):
             subj = random.choice(SUBJECTS)
             msg = random.choice(MESSAGES)
+            print(f"   📤 جاري الإرسال إلى {to}...")
             if send_email(to, subj, msg):
                 sent += 1
                 used_accounts.add(to)
             if i < len(p_emails) - 1:
                 delay = random.randint(MIN_DELAY_WITHIN_PERIOD, MAX_DELAY_WITHIN_PERIOD)
-                print(f"   ⏳ {delay//60} د {delay%60} ث")
+                print(f"   ⏳ انتظار {delay//60} د {delay%60} ث")
                 time.sleep(delay)
         
         if p_idx < len(starts) - 1:
@@ -386,7 +391,7 @@ def run_warmup_day(sheet):
             if wait > MIN_GAP_BETWEEN_PERIODS:
                 sleep_time = wait - random.randint(5, 15) * 60
                 if sleep_time > 0:
-                    print(f"😴 انتظار للفترة القادمة")
+                    print(f"😴 انتظار للفترة القادمة ({sleep_time//60} دقيقة)")
                     time.sleep(sleep_time)
     
     state["total_sent"] += sent
@@ -398,8 +403,10 @@ def run_warmup_day(sheet):
     
     if day < WARMUP_DAYS:
         state["current_day"] = day + 1
+        print(f"📅 الانتقال إلى اليوم {day + 1}")
     else:
         state["completed"] = True
+        print("🎉 اكتملت مرحلة التسخين!")
         send_completion_notification(state["total_sent"])
     
     save_state(state)
@@ -420,22 +427,15 @@ def main():
     
     print("✅ الخطوة 2: تم الاتصال بـ Google Sheets بنجاح.")
     print("✅ البوت جاهز")
+    print("=" * 50)
+    print("🔥 بدء التشغيل الفوري للتسخين...")
     
-    try:
-        while True:
-            run_warmup_day(sheet)
-            state = load_state()
-            if state and state.get("completed"):
-                print("\n🎉 انتهت مرحلة التسخين!")
-                break
-            now = datetime.now()
-            tomorrow = datetime(now.year, now.month, now.day, WORK_START_HOUR, 0) + timedelta(days=1)
-            wait = (tomorrow - now).total_seconds() + random.randint(-1800, 1800)
-            if wait > 0:
-                print(f"😴 انتظار حتى الغد...")
-                time.sleep(wait)
-    except KeyboardInterrupt:
-        print("\n👋 تم الإيقاف")
+    # تشغيل دورة التسخين مباشرة (مرة واحدة)
+    run_warmup_day(sheet)
+    
+    print("\n✅ انتهت دورة التسخين الحالية.")
+    print("⏳ سيتم إنهاء البرنامج. يمكنك تشغيله يدوياً مرة أخرى لبدء دورة جديدة.")
+    # لا نضع حلقة لا نهائية هنا لتجنب الانتظار
 
 if __name__ == "__main__":
     main()
