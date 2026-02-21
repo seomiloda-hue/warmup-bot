@@ -113,16 +113,22 @@ def connect_to_warmup_sheet():
         print(f"🔍 محاولة فتح ملف JSON: {JSON_FILE}")
         creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_FILE, SCOPE)
         print("✅ تم تحميل ملف JSON بنجاح")
+        print("🔍 محاولة التفويض لـ Google Sheets...")
         client = gspread.authorize(creds)
         print("✅ تم التفويض لـ Google Sheets")
+        print(f"🔍 محاولة فتح الشيت: {WARMUP_SHEET}...")
         sheet = client.open(WARMUP_SHEET).sheet1
         print(f"✅ تم فتح شيت: {WARMUP_SHEET}")
         return sheet
     except FileNotFoundError:
         print(f"❌ ملف JSON غير موجود: {JSON_FILE}")
         return None
+    except gspread.exceptions.SpreadsheetNotFound:
+        print(f"❌ لم يتم العثور على شيت باسم: {WARMUP_SHEET}")
+        print("   تأكد من اسم الشيت ومشاركته مع حساب الخدمة.")
+        return None
     except Exception as e:
-        print(f"❌ خطأ في فتح الشيت: {e}")
+        print(f"❌ خطأ غير متوقع: {type(e).__name__}: {e}")
         return None
 
 # ================== قراءة حسابات Gmail ==================
