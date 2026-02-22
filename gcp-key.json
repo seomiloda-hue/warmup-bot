@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "marketing-bot-487519",
+  "private_key_id": "9e70eed1b0301ef07d6defc6c14b9a0c5631e9d0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCflvqp0vRQK26y\nF2azkmFafVaddW4b8ffxkYonNo9HFxlHziduZaaNiTWzo/o+Cspn+HBBlvFFBp7k\nrRxkDH6X65rlpzstglFq6C3COHYTZ1odBHA0rPAetBBTkW5NR89OyCtJMqUisSz7\nUeYrbC6S/ewJCHC8NL9Sj/morJVf7srtG0+FSF9KcqLJ86QC2Z1aDi48TPI8fM49\nPFmF8xYf2rnx7ULSXpCIhV0Sd44Qs5iUVcn2fQcSyoHOzL+JyLUx1GgG3qWEk8DM\nxH2Q/p57vT5wSLG92wq+AvXZvPYI3JjpQg5YdOxl2jzAV2ZZ0vM9j/Ehs3KBzvcz\nIT1Cdq1BAgMBAAECggEAAjJLxOaYYjoWzfCwgywyltI+zO/+0fekl/iO1DdWBX51\n5J0bwdM4VZ5b1Nse6JexbXjn4p83NuH+cdtIFsBtRZ4ChcKld9zhTf1gE9o/FclI\nXjnfaXov29xSlTPdNscUPVtX7Sv7Rdz2Z4cbCeH1SiSgiQdKtexr7bD5mK63Z5iW\nNcSSrOez6cYyOHFq+OMPIT64o/y3PMVQyVXQZh9DCK9hTE6q9gJbs/dEHf0GMN2p\nzdnxazsogUHXUxLxPxMVtLBNmfjMPTi/lKD3kiDjOAlealQfP4w0HtgeuYOBJbCb\n9/7Axjetjv6GAxZbFDiNJnU4BOP5oLZZoSgFRJz1GQKBgQDONq3nDHbYvF6lLSRH\n5chhEVJcDOGEf81r5cw24s79AB9kg3Iy/fG4rnytOgs8B+p0o3VVNA8300usg1p4\nV1clfFedwVxzBN0iR+fzD5TzNl4XWVRJuaDCK/CwPaAOWsAWlN2RlhWEjRA6y1DC\n8VhOLCnphU9KdmTGTxqDcYjsHwKBgQDGHqYLh3gtBK5jCVRZwaugGamwfoCmpUFj\n3BepLt+nnQ9Y7RJCKA9ELTM8QtAsCNO8M+23+VM0vEZ5FE+P2TtqT0/dfihzxUBT\nM4kLC8il5mk94XH42vJJ+eECu9XDlKMiOqT6f0OnzEcq79AZT5u+5HOEdToBQDXf\nSt28eXM6nwKBgAwKr18FoE8JuPEmUK8OIQRiEZAkhGrLV8CMO7+cwP+PKUYiUuHd\naGcjcU5gTFWmFK/Y97oQ/y6AXTPmu7q5RvJ+b1Nb/j0NNKiS0F2mNEl7jEUKx1xC\nxbtw+24fOyB7diobaVDeFcWWwzLbuoyXsVNnSs9DJJ0xirL13ZN9ZsR7AoGAB467\nvszYJL9894IvmYztwxm3g2gP+EtthyWqMWX8WiR/pWDFxYhJrMwcnDvgPQ3JJfDF\nLLNyHRzhg1TnBBHBVnjYDxb07BWmMoZQv/8fFFUJxraG5ntTqsbBcp0/tkpBPtkF\n2hhouEnunRCw24ZR5qJIVdEy+UE9zNrKQppPbvkCgYA/XpTO2LNMJdVfIaMO8IjU\nSo0ePGg1cXR5n919wBiNdB7JnAg4VW9xAucrRT4BZqDXNzMhnQ+XsA+5811Z7T/H\nWXeJ75BCzsk38WMWkzxjQ2oVUAkw1TxPKovVbHhQniklcTXjLBME4eUho/eTdmrt\nVHp+2q6aUXGuOoPB/yjsHw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "warmup-bot@marketing-bot-487519.iam.gserviceaccount.com",
+  "client_id": "111939980652201557057",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/warmup-bot%40marketing-bot-487519.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
