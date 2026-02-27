@@ -1,16 +1,19 @@
-name: run-bot
+name: Warmup Bot
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"   # يشغل كل 30 دقيقة
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -18,15 +21,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install requirements
+      - name: Install deps
         run: pip install -r requirements.txt
 
-      # ========= مهم: إنشاء ملف Google Key =========
-      - name: Create gcp key
+      - name: Create gcp key file
         run: |
           echo '${{ secrets.GCP_KEY }}' > gcp-key.json
 
-      # ========= تشغيل البوت =========
       - name: Run bot
         env:
           ZOHO_EMAIL: ${{ secrets.ZOHO_EMAIL }}
