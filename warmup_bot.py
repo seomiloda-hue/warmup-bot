@@ -1,34 +1,43 @@
-import os, json, random, math
+import os
+import json
+import random
+import math
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
+
+import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import requests
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-# ================== SETTINGS ==================
-SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# ================== CONFIG ==================
+TZ = ZoneInfo("Africa/Casablanca")  # المغرب
+WORK_START = 13
+WORK_END = 19  # exclusive
+
+RUN_INTERVAL_MIN = 10  # must match cron
+
+SCOPE = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive",
+]
 JSON_FILE = "gcp-key.json"
 WARMUP_SHEET = "Warmup Accounts"
 STATE_FILE = "warmup_state.json"
 
 ZOHO_EMAIL = os.environ.get("ZOHO_EMAIL", "contact@dualwin.agency")
-ZOHO_PASSWORD = os.environ.get("ZOHO_PASSWORD")  # GitHub Secret
+ZOHO_PASSWORD = os.environ.get("ZOHO_PASSWORD", "")
 SMTP_SERVER = "smtp.zoho.com"
 SMTP_PORT = 587
 
-# Morocco is UTC+0 (you said UTC0). GitHub runner uses UTC time.
-WORK_START_HOUR_UTC = 13
-WORK_END_HOUR_UTC = 19  # end is exclusive (13:00 to 18:59)
-
-# GitHub schedule interval (minutes) — must match cron below
-RUN_INTERVAL_MIN = 5
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "DualWin_Agency")
 
 TOTAL_DAYS = 25
 
-# Your daily plan (safe with 4 inboxes)
+# خطة مناسبة لـ 4 حسابات عندك (آمنة + واقعية)
 DAILY_GOALS = {
     1: 5,  2: 5,  3: 6,  4: 6,  5: 7,
     6: 7,  7: 8,  8: 8,  9: 9,  10: 9,
@@ -37,17 +46,15 @@ DAILY_GOALS = {
     21: 20, 22: 20, 23: 20, 24: 20, 25: 20
 }
 
-NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "DualWin_Agency")
-
+SUBJECTS = ["اختبار", "تحقق سريع", "تأكيد الاستلام", "رسالة اختبار"]
 MESSAGES = [
     "هل وصلك هذا الإيميل؟",
     "تجربة سريعة لنظام الإرسال.",
     "يرجى تجاهل هذه الرسالة، مجرد اختبار.",
     "تأكيد وصول البريد.",
     "اختبار بسيط لوصول الرسائل.",
-    "هل يظهر هذا الإيميل في الوارد لديك؟"
+    "هل يظهر هذا الإيميل في الوارد لديك؟",
 ]
-SUBJECTS = ["اختبار", "تحقق سريع", "تأكيد الاستلام", "رسالة اختبار"]
 
 # ================== STATE ==================
 def load_state():
@@ -68,30 +75,35 @@ def save_state(state):
 def init_state():
     today = date.today().isoformat()
     return {
-        "start_date": today,         # day 1 starts today
-        "last_date": today,          # used to reset sent_today each day
+        "start_date": today,        # بداية day1
+        "last_date": today,         # لتصفير sent_today يومياً
         "sent_today": 0,
-        "carryover": 0,              # leftover from yesterday if not completed
+        "carryover": 0,             # المتبقي من أمس
         "total_sent": 0,
-        "completed": False,
-        "last_day_finished": 0       # last day we sent "done" notification for
+        "last_day_finished": 0,     # لمنع تكرار إشعار “Day completed”
+        "completed": False
     }
 
-def current_day_number(state):
+def migrate_old_state(state):
+    # إذا كان عندك state قديم من النسخة الأولى
+    if not state or "start_date" not in state:
+        return init_state()
+    for k, v in init_state().items():
+        state.setdefault(k, v)
+    return state
+
+def day_number(state):
     start = date.fromisoformat(state["start_date"])
     return (date.today() - start).days + 1
 
-def is_within_work_hours(now_utc: datetime) -> bool:
-    return WORK_START_HOUR_UTC <= now_utc.hour < WORK_END_HOUR_UTC
+def in_work_hours(now):
+    return WORK_START <= now.hour < WORK_END
 
-def reset_day_if_needed(state):
+def reset_daily_if_needed(state):
     today = date.today().isoformat()
     if state.get("last_date") != today:
-        # new day: carryover from yesterday if not completed
-        # yesterday target = DAILY_GOALS[yesterday] + carryover (old carryover)
-        # remaining = target - sent_today
-        # new carryover = max(0, remaining)
-        yday = current_day_number(state) - 1
+        # حساب carryover من أمس
+        yday = day_number(state) - 1
         if 1 <= yday <= TOTAL_DAYS:
             y_target = DAILY_GOALS[yday] + int(state.get("carryover", 0))
             remaining = max(0, y_target - int(state.get("sent_today", 0)))
@@ -102,7 +114,7 @@ def reset_day_if_needed(state):
         state["sent_today"] = 0
         state["last_date"] = today
 
-# ================== GOOGLE SHEETS ==================
+# ================== SHEETS ==================
 def connect_sheet():
     creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_FILE, SCOPE)
     client = gspread.authorize(creds)
@@ -110,10 +122,9 @@ def connect_sheet():
 
 def get_emails(sheet):
     emails = sheet.col_values(1)
-    valid = [e.strip() for e in emails if e and "@" in e]
-    return valid
+    return [e.strip() for e in emails if e and "@" in e]
 
-# ================== EMAIL ==================
+# ================== SMTP ==================
 def send_email(to_addr, subject, body):
     msg = MIMEMultipart()
     msg["From"] = ZOHO_EMAIL
@@ -134,79 +145,87 @@ def ntfy(text, title="Warmup Bot", tags="memo"):
             f"https://ntfy.sh/{NTFY_TOPIC}",
             data=text.encode("utf-8"),
             headers={"Title": title, "Priority": "default", "Tags": tags},
-            timeout=10
+            timeout=10,
         )
     except:
         pass
 
 # ================== BATCH LOGIC (NO SLEEP) ==================
-def runs_left_today(now_utc: datetime) -> int:
-    end = now_utc.replace(hour=WORK_END_HOUR_UTC, minute=0, second=0, microsecond=0)
-    seconds_left = max(0, int((end - now_utc).total_seconds()))
-    return max(1, (seconds_left // (RUN_INTERVAL_MIN * 60)) + 1)
+def runs_left_today(now):
+    end = now.replace(hour=WORK_END, minute=0, second=0, microsecond=0)
+    sec_left = max(0, int((end - now).total_seconds()))
+    return max(1, (sec_left // (RUN_INTERVAL_MIN * 60)) + 1)
 
-def compute_batch(remaining_today: int, now_utc: datetime) -> int:
-    # Distribute remaining over remaining runs, cap to keep it natural and fast
-    rl = runs_left_today(now_utc)
-    b = math.ceil(remaining_today / rl)
-    b = max(1, min(b, 5, remaining_today))
+def batch_size(remaining, now):
+    # توزيع الباقي على عدد التشغيلات المتبقية اليوم
+    rl = runs_left_today(now)
+    b = math.ceil(remaining / rl)
+    # نخليها طبيعية وسريعة (GitHub)
+    b = max(1, min(b, 2, remaining))  # أقصى 2 في كل Run
     return b
 
 def main():
     if not ZOHO_PASSWORD:
-        print("Missing ZOHO_PASSWORD")
+        print("ERROR: Missing ZOHO_PASSWORD")
         return
 
-    state = load_state() or init_state()
-    reset_day_if_needed(state)
+    state = migrate_old_state(load_state())
+    reset_daily_if_needed(state)
 
-    day = current_day_number(state)
-    if day > TOTAL_DAYS:
+    now = datetime.now(TZ)
+    d = day_number(state)
+
+    if d > TOTAL_DAYS:
         state["completed"] = True
         save_state(state)
         ntfy("🎉 اكتملت مرحلة التسخين (25 يوم).", title="Warmup Done", tags="tada")
         print("DONE")
         return
 
-    now_utc = datetime.utcnow()
-    if not is_within_work_hours(now_utc):
-        # IMPORTANT: exit fast (no waiting) — GitHub will run again on schedule
+    if not in_work_hours(now):
+        # مهم: نخرج بسرعة. GitHub هو اللي يرجع يشغل حسب الجدولة.
         save_state(state)
         print("Outside work hours, exiting.")
         return
 
-    # today target (with carryover)
-    target_today = DAILY_GOALS[day] + int(state.get("carryover", 0))
+    # هدف اليوم مع carryover
+    target_today = DAILY_GOALS[d] + int(state.get("carryover", 0))
     sent_today = int(state.get("sent_today", 0))
-    remaining_today = target_today - sent_today
+    remaining = target_today - sent_today
 
-    if remaining_today <= 0:
-        # If day already completed, send done notification once
-        if int(state.get("last_day_finished", 0)) != day:
+    if remaining <= 0:
+        # إشعار اكتمال اليوم مرة واحدة فقط
+        if int(state.get("last_day_finished", 0)) != d:
             ntfy(
-                f"✅ Day {day} completed\nSent today: {target_today}\nTotal sent: {state.get('total_sent', 0)}",
+                f"✅ اليوم {d} اكتمل.\nأُرسل اليوم: {target_today}\nالإجمالي: {state.get('total_sent', 0)}",
                 title="Daily Summary (done)",
-                tags="white_check_mark"
+                tags="white_check_mark",
             )
-            state["last_day_finished"] = day
+            state["last_day_finished"] = d
             state["carryover"] = 0
             save_state(state)
         print("Day already completed.")
         return
 
-    # read recipients
-    sheet = connect_sheet()
-    emails = get_emails(sheet)
-    if not emails:
-        ntfy("❌ لا توجد إيميلات في Google Sheet (عمود A).", title="Warmup Error", tags="x")
-        print("No emails.")
+    # قراءة الشيت
+    try:
+        sheet = connect_sheet()
+        emails = get_emails(sheet)
+    except Exception as e:
+        ntfy(f"❌ خطأ في Google Sheet: {e}", title="Warmup Error", tags="x")
+        print(f"Sheet error: {e}")
         return
 
-    # send a small batch now
-    batch = compute_batch(remaining_today, now_utc)
+    if not emails:
+        ntfy("❌ لا توجد إيميلات في الشيت (عمود A).", title="Warmup Error", tags="x")
+        print("No emails in sheet.")
+        return
 
+    # إرسال دفعة صغيرة
+    b = batch_size(remaining, now)
     sent_now = 0
-    for _ in range(batch):
+
+    for _ in range(b):
         to_addr = random.choice(emails)
         subject = random.choice(SUBJECTS)
         body = random.choice(MESSAGES)
@@ -217,23 +236,23 @@ def main():
             state["total_sent"] = int(state.get("total_sent", 0)) + 1
             save_state(state)
         except Exception as e:
-            print(f"Send error: {e}")
+            ntfy(f"❌ خطأ SMTP: {e}", title="Warmup SMTP Error", tags="x")
+            print(f"SMTP error: {e}")
             break
 
-    # if we finished today after this batch → ntfy once
+    # إذا كمل اليوم بعد هاد الدفعة
     remaining_after = target_today - int(state.get("sent_today", 0))
-    if remaining_after <= 0 and int(state.get("last_day_finished", 0)) != day:
+    if remaining_after <= 0 and int(state.get("last_day_finished", 0)) != d:
         ntfy(
-            f"✅ Day {day} completed\nSent today: {target_today}\nTotal sent: {state.get('total_sent', 0)}",
+            f"✅ اليوم {d} اكتمل.\nأُرسل اليوم: {target_today}\nالإجمالي: {state.get('total_sent', 0)}",
             title="Daily Summary (done)",
-            tags="white_check_mark"
+            tags="white_check_mark",
         )
-        state["last_day_finished"] = day
+        state["last_day_finished"] = d
         state["carryover"] = 0
         save_state(state)
 
-    print(f"OK day={day} target_today={target_today} sent_now={sent_now} sent_today={state['sent_today']} total={state['total_sent']}")
+    print(f"OK day={d} target={target_today} sent_now={sent_now} sent_today={state['sent_today']} total={state['total_sent']}")
 
 if __name__ == "__main__":
     main()
-
