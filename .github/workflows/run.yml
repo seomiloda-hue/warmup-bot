@@ -16,6 +16,7 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,11 +29,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Create gcp key
-        run: printf '%s' "${{ secrets.GCP_KEY }}" > gcp-key.json
+      # ===== FIX FOR GCP_KEY =====
+      - name: Create gcp key file
+        run: |
+          cat << 'EOF' > gcp-key.json
+          ${{ secrets.GCP_KEY }}
+          EOF
 
       - name: Run bot
         env:
