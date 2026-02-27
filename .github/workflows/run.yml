@@ -1,22 +1,16 @@
 name: Warmup Bot
 
 on:
-  schedule:
-    # كل 5 دقائق بين 12:00 و 17:59 UTC
-    # (يعني تقريباً 13:00-19:00 في المغرب إذا كان UTC+1)
-    - cron: "*/5 12-17 * * *"
   workflow_dispatch:
-
-permissions:
-  contents: write
-
-concurrency:
-  group: warmup-bot
-  cancel-in-progress: true
+  schedule:
+    # كل 10 دقايق بين 13:00 و 18:50 (بتوقيت المغرب إذا كان UTC+0)
+    - cron: "*/10 13-18 * * *"
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - name: Download code
         uses: actions/checkout@v4
@@ -30,13 +24,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Create Google key file
-        run: echo '${{ secrets.GCP_KEY }}' > gcp-key.json
+        run: printf '%s' "${{ secrets.GCP_KEY }}" > gcp-key.json
 
       - name: Run bot
         env:
-          ZOHO_EMAIL: contact@dualwin.agency
           ZOHO_PASSWORD: ${{ secrets.ZOHO_PASSWORD }}
-          NTFY_TOPIC: DualWin_Agency
+          ZOHO_EMAIL: contact@dualwin.agency
         run: python warmup_bot.py
 
       - name: Save state
@@ -44,5 +37,5 @@ jobs:
           git config user.name "bot"
           git config user.email "bot@github.com"
           git add warmup_state.json || true
-          git commit -m "update warmup state" || true
-          git push || true
+          git commit -m "update state" || true
+          git push
