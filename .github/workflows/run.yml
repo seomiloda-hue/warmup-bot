@@ -1,56 +1,34 @@
-name: Warmup Bot
+name: run-bot
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
-
-permissions:
-  contents: write
-
-concurrency:
-  group: warmup-bot
-  cancel-in-progress: true
+    - cron: "*/30 * * * *"   # يشغل كل 30 دقيقة
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install requirements
         run: pip install -r requirements.txt
 
-      # ===== FIX FOR GCP_KEY =====
-      - name: Create gcp key file
+      # ========= مهم: إنشاء ملف Google Key =========
+      - name: Create gcp key
         run: |
-          cat << 'EOF' > gcp-key.json
-          ${{ secrets.GCP_KEY }}
-          EOF
+          echo '${{ secrets.GCP_KEY }}' > gcp-key.json
 
+      # ========= تشغيل البوت =========
       - name: Run bot
         env:
-          ZOHO_EMAIL: contact@dualwin.agency
+          ZOHO_EMAIL: ${{ secrets.ZOHO_EMAIL }}
           ZOHO_PASSWORD: ${{ secrets.ZOHO_PASSWORD }}
-          NTFY_TOPIC: DualWin_Agency
         run: python warmup_bot.py
-
-      - name: Commit state
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add warmup_state.json || true
-          git commit -m "update warmup state" || true
-          git pull --rebase || true
-          git push || true
