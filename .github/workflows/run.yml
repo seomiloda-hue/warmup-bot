@@ -1,0 +1,38 @@
+name: Warmup Bot
+
+on:
+  schedule:
+    - cron: "*/10 12-18 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download code
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install libraries
+        run: pip install -r requirements.txt
+
+      - name: Create Google key file
+        run: echo '${{ secrets.GCP_KEY }}' > gcp-key.json
+
+      - name: Run bot
+        env:
+          ZOHO_PASSWORD: ${{ secrets.ZOHO_PASSWORD }}
+        run: python warmup_bot.py
+
+      - name: Save state
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add warmup_state.json || true
+          git commit -m "update state" || true
+          git push
